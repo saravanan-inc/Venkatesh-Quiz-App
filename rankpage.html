@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+      integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p"
+      crossorigin="anonymous"
+    />
+    <style>
+      #students {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      #students td,
+      #students th {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+
+      #students tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      #students tr:hover {
+        background-color: #ddd;
+      }
+
+      #students th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04aa6d;
+        color: white;
+      }
+
+      .search {
+        width: 100%;
+        position: relative;
+        display: flex;
+      }
+
+      .searchTerm {
+        width: 100%;
+        border: 3px solid #00b4cc;
+        border-right: none;
+        padding: 5px;
+        height: 20px;
+        border-radius: 5px 0 0 5px;
+        outline: none;
+        color: #9dbfaf;
+      }
+
+      .searchTerm:focus {
+        color: #000000;
+      }
+
+      .searchButton {
+        width: 40px;
+        height: 36px;
+        border: 1px solid #00b4cc;
+        background: #00b4cc;
+        text-align: center;
+        color: #fff;
+        border-radius: 0 5px 5px 0;
+        cursor: pointer;
+        font-size: 20px;
+      }
+
+      .wrap {
+        margin-bottom: 20px;
+      }
+
+      .wrap > a {
+        background-color: cornflowerblue;
+        border: none;
+        color: white;
+        padding: 10px;
+        margin: 10px 0;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+      }
+    </style>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-analytics.js";
+      import {
+        collection,
+        getDocs,
+        getFirestore,
+      } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyB_XCzhyKInEIiQ7rgWhDG0qqGaWYBGzOw",
+        authDomain: "venkatest-quizapp-db.firebaseapp.com",
+        projectId: "venkatest-quizapp-db",
+        storageBucket: "venkatest-quizapp-db.appspot.com",
+        messagingSenderId: "619616515116",
+        appId: "1:619616515116:web:53b3cb1245eeb042960d89",
+        measurementId: "G-G0TR9EHYP4",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+
+      const db = getFirestore();
+
+      const colRef = collection(db, "QuizApp-Ranks");
+      const ranks = [];
+      const btn = document.getElementById("searchButton");
+      const table = document.querySelector("#students");
+      const input = document.getElementById("searchTerm");
+
+      function getData() {
+        getDocs(colRef)
+          .then((snapshot) => {
+            snapshot.docs.forEach((doc) => {
+              ranks.push({
+                ...doc.data(),
+                id: doc.id,
+              });
+            });
+            addRows(ranks);
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      }
+
+      getData();
+
+      function addRows(ranks) {
+        table.innerHTML =
+          "<tr><th>Name</th><th>Percentage</th><th>Rank</th></tr>";
+
+        ranks.sort((a, b) => b.Percentage - a.Percentage);
+        ranks.forEach((student, index) => {
+          const row = table.insertRow(-1);
+          const cell1 = row.insertCell(0);
+          const cell2 = row.insertCell(1);
+          const cell3 = row.insertCell(2);
+          cell1.innerHTML = student.Name;
+          cell2.innerHTML = `${student.Percentage}%`;
+          cell3.innerHTML = index + 1;
+        });
+      }
+
+      btn.addEventListener("click", searchStudents);
+      function searchStudents() {
+        if (input.value == "") {
+          return;
+        }
+
+        const searchExist = ranks.filter(function (student) {
+          student = student.Name.toLowerCase();
+          return student.indexOf(input.value.toLowerCase()) > -1;
+        });
+        if (searchExist.length > 0) {
+          const tag = document.createElement("a");
+          tag.href = "/rankpage.html";
+          const text = document.createTextNode("Show All Ranks");
+          tag.appendChild(text);
+          document.getElementById("wrap").appendChild(tag);
+          return addRows(searchExist);
+        }
+        const tag = document.createElement("h3");
+        const text = document.createTextNode("Sorry your Name doesn't exist");
+        tag.appendChild(text);
+        table.prepend(tag);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Kalvithugal Quiz Ranks</h1>
+    <div class="wrap" id="wrap">
+      <div class="search">
+        <input
+          type="text"
+          id="searchTerm"
+          class="searchTerm"
+          placeholder="What are you looking for?"
+        />
+        <button type="submit" id="searchButton" class="searchButton">
+          <i class="fa fa-search"></i>
+        </button>
+      </div>
+    </div>
+    <table id="students"></table>
+  </body>
+</html>
