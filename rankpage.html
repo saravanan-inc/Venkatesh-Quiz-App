@@ -109,6 +109,8 @@
       };
 
       // Initialize Firebase
+      const ranksStore = [];
+
       const app = initializeApp(firebaseConfig);
       const analytics = getAnalytics(app);
 
@@ -123,12 +125,23 @@
       function getData() {
         getDocs(colRef)
           .then((snapshot) => {
-            snapshot.docs.forEach((doc) => {
+            snapshot.docs.forEach((doc, index) => {
               ranks.push({
                 ...doc.data(),
                 id: doc.id,
               });
             });
+            ranks.sort((a, b) => b.Percentage - a.Percentage);
+            ranks.forEach((r, index) => {
+              ranksStore.push({
+                ...r,
+                rank: index,
+              });
+            });
+            // localStorage.setItem(
+            //   "kalvithugalRanks",
+            //   JSON.stringify(ranksStore)
+            // );
             addRows(ranks);
           })
           .catch((error) => {
@@ -142,7 +155,6 @@
         table.innerHTML =
           "<tr><th>Name</th><th>Percentage</th><th>Rank</th></tr>";
 
-        ranks.sort((a, b) => b.Percentage - a.Percentage);
         ranks.forEach((student, index) => {
           const row = table.insertRow(-1);
           const cell1 = row.insertCell(0);
@@ -150,7 +162,11 @@
           const cell3 = row.insertCell(2);
           cell1.innerHTML = student.Name;
           cell2.innerHTML = `${student.Percentage}%`;
-          cell3.innerHTML = index + 1;
+          if (student.rank) {
+            cell3.innerHTML = student.rank + 1;
+          } else {
+            cell3.innerHTML = index + 1;
+          }
         });
       }
 
@@ -160,16 +176,28 @@
           return;
         }
 
-        const searchExist = ranks.filter(function (student) {
+        // const ranks = localStorage.getItem("kalvithugalRanks")
+        //   ? JSON.parse(localStorage.getItem("kalvithugalRanks"))
+        //   : {};
+
+        const container = document.getElementById("wrap");
+        const atag = document.getElementById("a-tag");
+
+        const searchExist = ranksStore.filter(function (student) {
           student = student.Name.toLowerCase();
           return student.indexOf(input.value.toLowerCase()) > -1;
         });
         if (searchExist.length > 0) {
-          const tag = document.createElement("a");
-          tag.href = "/rankpage.html";
-          const text = document.createTextNode("Show All Ranks");
-          tag.appendChild(text);
-          document.getElementById("wrap").appendChild(tag);
+          if (atag === null) {
+            const tag = document.createElement("a");
+            tag.href = "/rankpage.html";
+            tag.setAttribute("id", "a-tag");
+            const text = document.createTextNode("Show All Ranks");
+            tag.appendChild(text);
+
+            container.appendChild(tag);
+          }
+
           return addRows(searchExist);
         }
         const tag = document.createElement("h3");
